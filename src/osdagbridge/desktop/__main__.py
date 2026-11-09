@@ -72,6 +72,11 @@ def _ensure_std_streams():
 
 _ensure_std_streams()
 
+import PySide6
+_pyside_platforms = os.path.join(os.path.dirname(PySide6.__file__), "plugins", "platforms")
+if os.path.isdir(_pyside_platforms) and "QT_QPA_PLATFORM_PLUGIN_PATH" not in os.environ:
+    os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = _pyside_platforms
+
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QFile, QTextStream
