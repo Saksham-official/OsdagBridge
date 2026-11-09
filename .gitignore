@@ -271,3 +271,6 @@ screenshots/
 assets/
 report.md
 tasks.md
+*.zip
+Submission_Deliverables/
+Deliverables/
