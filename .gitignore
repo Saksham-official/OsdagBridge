@@ -264,3 +264,10 @@ src/osdag_map_cache/
 temp_plot.html
 *.html
 tools/
+# Screening deliverables and generated reports
+Report_*
+Technical_Changes_Document*
+screenshots/
+assets/
+report.md
+tasks.md

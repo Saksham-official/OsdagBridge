@@ -1491,6 +1491,13 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 \label{sec:overall-summary}
 % ===========================
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{assets/ur_summary_chart.png}
+\caption{\textbf{Overall Structural Utilization Ratio Summary (All Primary Elements)}}
+\label{fig:ur-summary-chart}
+\end{figure}
+
 \vspace{1em}
 \begin{longtable}{|C{3.4cm}|L{4.5cm}|C{2.3cm}|C{2.3cm}|>{\centering\arraybackslash}p{1.6cm}|}
 \caption{\textbf{Overall Design Check Summary --- All Members}}

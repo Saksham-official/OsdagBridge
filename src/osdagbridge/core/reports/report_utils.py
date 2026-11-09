@@ -107,9 +107,9 @@ def _fig_embed(path, caption, width=r'\textwidth', height=None):
                 r'\caption*{\small ' + caption + '}\n'
                 r'\vspace{-0.5em}' + '\n'
                 r'\end{figure}')
-    # fbox placeholder — matches template exactly
-    return (r'\noindent\fbox{\parbox{0.97\textwidth}{' + '\n'
+    # fbox placeholder — matches template exactly with clean vertical separation
+    return (r'\par\vspace{0.8em}\noindent\fbox{\parbox{0.97\textwidth}{' + '\n'
             r'\textit{[ PLACEHOLDER: ' + caption + r' ]}' + '\n'
-            r'}}')
+            r'}}\par\vspace{0.8em}')
 
 

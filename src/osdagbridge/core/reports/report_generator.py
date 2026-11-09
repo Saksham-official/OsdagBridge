@@ -103,7 +103,7 @@
 #                                                          else → CustomMessageBox("Report Saved")
 #==============================================================================
 
-import os, shutil, logging, datetime, tempfile, subprocess
+import os, shutil, logging, datetime, tempfile, subprocess, re
 from dataclasses import dataclass, field
 from typing import Optional, List, Literal
 
@@ -144,137 +144,20 @@ logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PREAMBLE
+# PREAMBLE (Centralized via styles.py)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+from .styles import (
+    get_preamble,
+    ColorPalette,
+    DEFAULT_GEOMETRY,
+    DEFAULT_TABLE_STYLE,
+    DEFAULT_TYPOGRAPHY
+)
+
 def preamble(project_name, job_number, report_date, report_version='Rev 0'):
-    pn = _tex(project_name)
-    jn = _tex(job_number)
-    rd = _tex(report_date)
-    rv = _tex(report_version)
-    return r"""
-\documentclass[12pt,a4paper]{report}
-
-% Packages
-\usepackage[a4paper, margin=1in]{geometry}
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{booktabs}
-\usepackage{array}
-\usepackage{tabularx}
-\usepackage{float}
-\usepackage{fancyhdr}
-\usepackage[hidelinks]{hyperref}
-\usepackage{xcolor}
-\usepackage{setspace}
-\usepackage{enumitem}
-\usepackage{caption}
-
-\captionsetup{
-    labelfont=bf,
-    justification=raggedright,
-    singlelinecheck=false,
-    format=plain
-}
-\usepackage{subcaption}
-\usepackage{multirow}
-\usepackage{colortbl}
-\usepackage{longtable}
-\setlength{\LTleft}{\fill}
-\setlength{\LTright}{\fill}
-\usepackage{titlesec}
-\usepackage{titletoc}
-\usepackage{lastpage}
-\usepackage{makecell}
-\usepackage{etoolbox}
-\usepackage{needspace}
-
-\numberwithin{table}{chapter}
-\numberwithin{figure}{chapter}
-% Table layout and spacing: consistent padding, row height, and longtable pre/post skips
-\setlength{\tabcolsep}{6pt}
-\renewcommand{\arraystretch}{1.12}
-\setlength{\LTpre}{0pt}
-\setlength{\LTpost}{6pt}
-% Table rules (outline thickness) and small extra row height for clarity
-\setlength{\arrayrulewidth}{0.5pt}
-\setlength{\extrarowheight}{0.6pt}
-
-% Prevent tables from overflowing past the page bottom:
-% if fewer than 5 baseline-skips remain, break to the next page first.
-\BeforeBeginEnvironment{table}{\needspace{5\baselineskip}}
-\BeforeBeginEnvironment{longtable}{\needspace{5\baselineskip}}
-
-\definecolor{osdagGreen}{HTML}{91B014}
-
-\fancypagestyle{main}{
-  \fancyhf{}
-  \fancyhead[L]{""" + pn + r""" $|$ """ + jn + r"""}
-  \fancyhead[R]{""" + rd + r""" $|$ """ + rv + r"""}
-  \fancyfoot[L]{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}
-  \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
-  \renewcommand{\headrule}{\color{osdagGreen}\hrule width\headwidth height 1pt \vspace{2pt}}
-  \renewcommand{\footrule}{%
-    \ifbool{hasSDonPage}{%
-      \vspace{-20pt}%
-      \hbox to \headwidth{\textcolor{black}{\footnotesize\textit{* Software default value}}\hfil}%
-      \vspace{4pt}%
-    }{%
-      \vspace{-8pt}%
-    }%
-    \color{osdagGreen}\hrule width\headwidth height 1pt \vspace{6pt}%
-  }
-}
-\fancypagestyle{plain}{
-  \fancyhf{}
-  \fancyhead[L]{""" + pn + r""" $|$ """ + jn + r"""}
-  \fancyhead[R]{""" + rd + r""" $|$ """ + rv + r"""}
-  \fancyfoot[L]{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}
-  \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
-  \renewcommand{\headrule}{\color{osdagGreen}\hrule width\headwidth height 1pt \vspace{2pt}}
-  \renewcommand{\footrule}{%
-    \ifbool{hasSDonPage}{%
-      \vspace{-20pt}%
-      \hbox to \headwidth{\textcolor{black}{\footnotesize\textit{* Software default value}}\hfil}%
-      \vspace{4pt}%
-    }{%
-      \vspace{-8pt}%
-    }%
-    \color{osdagGreen}\hrule width\headwidth height 1pt \vspace{6pt}%
-  }
-}
-\fancypagestyle{firstpage}{
-  \fancyhf{}
-  \renewcommand{\headrulewidth}{0pt}
-  \fancyfoot[L]{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}
-  \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
-  \renewcommand{\footrule}{\vspace{-8pt}\color{osdagGreen}\hrule width\headwidth height 1pt \vspace{6pt}}
-}
-\pagestyle{main}
-\setstretch{1.15}
-
-% Custom Commands
-\newcommand{\placeholder}[1]{\textit{\textless #1\textgreater}}
-\newcommand{\todo}[1]{\colorbox{yellow}{TODO: #1}}
-\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
-\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
-
-% Software-default asterisk
-\newcommand{\sdstar}{\textsuperscript{*}}
-\newbool{hasSDonPage}
-\boolfalse{hasSDonPage}
-\newcommand{\markSD}{\global\booltrue{hasSDonPage}}
-\renewcommand{\sdstar}{\textsuperscript{*}\markSD{}}
-\AddToHook{shipout/before}{\global\boolfalse{hasSDonPage}}
-
-\title{\Large\textbf{OsdagBridge} \\ \normalsize Open Source Software for Steel Girder Bridge Design \\ \vspace{2cm} \large Design Report}
-\author{}
-\date{}
-
-\begin{document}
-"""
+    """Delegate preamble generation to centralized styles module (Single Source of Truth)."""
+    return get_preamble(project_name, job_number, report_date, report_version)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -833,6 +716,62 @@ _FIGURE_MAP = [
     ('defl_ll',               'defl_ll.png'),
 ]
 
+
+def apply_repeated_table_headers(tex: str) -> str:
+    """
+    Task 1: Repeated Table Headers Across Page Breaks.
+    Converts LaTeX longtable environments to include \\endfirsthead and \\endhead
+    so that table column headers repeat across page transitions.
+    """
+    def convert_longtable(match):
+        block = match.group(0)
+        if r'\endhead' in block:
+            return block
+
+        # Case 1: with caption
+        m = re.search(r'(\\caption\{[^\n]+\})(\\\\)?\s*\n\s*\\hline\s*\n\s*([^\n]+?\\\\(?:\s*\[[^\]]*\])?)\s*\n\s*\\hline', block)
+        if m:
+            cap = m.group(1).rstrip()
+            if not cap.endswith(r'\\'):
+                cap += r'\\'
+            hdr = m.group(3).strip()
+            replacement = (
+                f'{cap}\n'
+                '\\hline\n'
+                f'{hdr}\n'
+                '\\endfirsthead\n'
+                '\\hline\n'
+                f'{hdr}\n'
+                '\\endhead\n'
+            )
+            return block.replace(m.group(0), replacement, 1)
+
+        # Case 2: without caption
+        m2 = re.search(r'(\\begin\{longtable\}(?:\[[^\]]*\])?\{[^}]*\}\s*\n)\s*\\hline\s*\n\s*([^\n]+?\\\\(?:\s*\[[^\]]*\])?)\s*\n\s*\\hline', block)
+        if m2:
+            prefix = m2.group(1)
+            hdr = m2.group(2).strip()
+            replacement = (
+                f'{prefix}'
+                '\\hline\n'
+                f'{hdr}\n'
+                '\\endfirsthead\n'
+                '\\hline\n'
+                f'{hdr}\n'
+                '\\endhead\n'
+            )
+            return block.replace(m2.group(0), replacement, 1)
+
+        # Case 3: table with caption but no standard header row
+        m3 = re.search(r'(\\caption\{[^\n]+\})(?!\s*\\\\)', block)
+        if m3:
+            return block.replace(m3.group(0), m3.group(0) + r'\\')
+
+        return block
+
+    return re.sub(r'\\begin\{longtable\}.*?\\end\{longtable\}', convert_longtable, tex, flags=re.DOTALL)
+
+
 def generate_report(payload, request):
     # type: (ReportPayload, ReportRequest) -> ReportResult
     """Compile the full OsdagBridge Design Report to PDF (+ .tex source)."""
@@ -851,7 +790,12 @@ def generate_report(payload, request):
                     os.environ['PATH'] = str(latex_env.bin_dir) + os.pathsep + os.environ.get('PATH', '')
         except Exception as e:
             logger.info("osdag_latex_env not found or failed to load. (%s)", e)
-            
+
+        if shutil.which(compiler) is None:
+            common_miktex = os.path.expandvars(r"%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64\pdflatex.exe")
+            if os.path.exists(common_miktex):
+                compiler = common_miktex
+
         logger.info("Compiler: %s", compiler)
 
         os.makedirs(request.output_dir, exist_ok=True)
@@ -894,6 +838,14 @@ def generate_report(payload, request):
             if org_logo_src:
                 shutil.copy2(org_logo_src, os.path.join(tmp_assets, 'org_logo.png'))
                 org_logo_latex = 'assets/org_logo.png'
+
+            # Task 4 & 5: Generate UR and BOQ summary chart assets
+            try:
+                from .chart_generator import generate_ur_summary_chart, generate_boq_summary_chart
+                generate_ur_summary_chart(os.path.join(tmp_assets, 'ur_summary_chart.png'))
+                generate_boq_summary_chart(os.path.join(tmp_assets, 'boq_summary_chart.png'))
+            except Exception as e:
+                logger.warning("Could not generate summary charts: %s", e)
 
             # Compute and inject quantities for Chapter 7
             quantities = calculate_material_quantities(payload.inputs, payload.output_dict)
@@ -941,11 +893,8 @@ def generate_report(payload, request):
 
             full_tex = "\n".join(doc_parts)
 
-
-            # NOTE: longtable header repetition is handled per-table in each
-            # chapter file (e.g. \endfirsthead / \endhead).  No automatic
-            # post-processing is applied here to avoid mis-ordering captions
-            # and column headings.
+            # Task 1: Ensure all longtable environments repeat headers across page breaks
+            full_tex = apply_repeated_table_headers(full_tex)
 
             tmp_tex = os.path.join(tmp_dir, request.file_stem + '.tex')
             tmp_pdf = os.path.join(tmp_dir, request.file_stem + '.pdf')

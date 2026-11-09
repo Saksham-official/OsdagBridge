@@ -3,6 +3,14 @@ def ch7_quantities(input_dict):
 \chapter{Material Take-off \& Quantity Summary}
 \label{ch:material-takeoff}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{assets/boq_summary_chart.png}
+\caption{\textbf{Material Quantity Summary: Structural Steel Tonnage Breakdown and Concrete vs. Reinforcement}}
+\label{fig:boq-summary-chart}
+\end{figure}
+
+\vspace{1em}
 \noindent\textbf{Table 7.1  Bill of Materials (Steel, Concrete, and Reinforcement Quantities)}
 
 \begingroup
